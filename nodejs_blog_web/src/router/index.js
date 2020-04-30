@@ -18,22 +18,34 @@ const routes = [{
       {
         path: '/personal',
         name: 'personal',
-        component: () => import('@/views/Personal.vue')
+        component: () => import('@/views/Personal.vue'),
+        meta: {
+          requireAuth: true
+        }
       },
       {
         path: '/article',
         name: 'article',
-        component: () => import('@/views/Article.vue')
+        component: () => import('@/views/Article.vue'),
+        meta: {
+          requireAuth: true
+        }
       },
       {
         path: '/article/add',
         name: 'articleAdd',
-        component: () => import('@/views/ArticleEdit.vue')
+        component: () => import('@/views/ArticleEdit.vue'),
+        meta: {
+          requireAuth: true
+        }
       },
       {
         path: '/article/edit/:id',
         name: 'articleEdit',
-        component: () => import('@/views/ArticleEdit.vue')
+        component: () => import('@/views/ArticleEdit.vue'),
+        meta: {
+          requireAuth: true // true 为这个页面需要登录权限
+        }
       },
     ]
   },

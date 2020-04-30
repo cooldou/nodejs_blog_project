@@ -9,18 +9,39 @@ import "@/assets/scss/common.scss"
 import "@/assets/font/iconfont.css"
 import mavonEditor from 'mavon-editor'
 import 'mavon-editor/dist/css/index.css'
+import Cookie from 'js-cookie'
+// import base from './store/base'
 
+import {
+  Service
+} from './modules/request'
 // use
 Vue.use(mavonEditor)
 Vue.use(ElementUI)
+// Vue.prototype.$axios = axios
+Vue.prototype.$axios = Service
 Vue.config.productionTip = false
 
+// 路由守卫
 router.beforeEach((to, from, next) => {
-  let token = '1afsfsdfsdfsdf'
-  if (token) {
+  store.commit('setToken', Cookie.get('token'))
+  // base.setToken(Cookie.get('token'))
+  // let cookie = Cookie.get('token')
+  // base.mutations.setToken(cookie)
+  if (store.state.token) {
     store.commit('changIsSigin', 1)
   }
-  next()
+  if (to.meta.requireAuth) {
+    if (store.state.token) {
+      next()
+    } else {
+      next({
+        path: '/login'
+      })
+    }
+  } else {
+    next()
+  }
 })
 
 new Vue({

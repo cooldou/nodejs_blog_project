@@ -2,11 +2,11 @@
   <div class="sign-box">
     <div class="signIn common-box" v-if="status === 1">
       <el-form :model="loginForm" :rules="loginRules" ref="loginForm" key="login" label-width="0px">
-        <el-form-item prop="name">
-          <el-input v-model="loginForm.name" placeholder="请输入账号"></el-input>
+        <el-form-item prop="username">
+          <el-input v-model="loginForm.username" placeholder="请输入账号" ></el-input>
         </el-form-item>
         <el-form-item prop="password">
-          <el-input type="password" v-model="loginForm.password" placeholder="请输入密码"></el-input>
+          <el-input type="password" v-model="loginForm.password" placeholder="请输入密码" ></el-input>
         </el-form-item>
         <el-form-item>
           <el-button class="signBtn" type="primary" @click="signIn">登录</el-button>
@@ -15,15 +15,15 @@
       <span class="signText" @click="toSignUP">注册新账号</span>
     </div>
     <div v-else class="signUp common-box">
-      <el-form :model="regForm" :rules="regRules" ref="regForm" label-width="0px" key="register">
-        <el-form-item prop="name">
-          <el-input v-model="regForm.name" placeholder="请输入账号"></el-input>
+      <el-form :model="regForm" :rules="regRules" ref="regForm" label-width="80px" key="register">
+        <el-form-item prop="username" label="账号">
+          <el-input v-model="regForm.username" placeholder="请输入账号"></el-input>
         </el-form-item>
-        <el-form-item prop="password">
+        <el-form-item prop="password" label="密码">
           <el-input type="password" v-model="regForm.password" placeholder="请输入密码"></el-input>
         </el-form-item>
-        <el-form-item prop="checkPass">
-          <el-input type="password" v-model="regForm.checkPass" placeholder="再次输入密码"></el-input>
+        <el-form-item prop="nickname" label="昵称">
+          <el-input v-model="regForm.nickname" placeholder="请输入昵称"></el-input>
         </el-form-item>
         <el-form-item>
           <el-button class="signBtn" type="primary" @click="signUP">注册</el-button>
@@ -36,71 +36,92 @@
 </template>
 
 <script>
+  import { mapMutations } from 'vuex'
+  import Cookie from 'js-cookie'
   export default {
     name: "Login",
     data () {
-      var validatePass = (rule, value, callback) => {
-        if (value === '') {
-          callback(new Error('请输入密码'));
-        } else {
-          if (this.regForm.checkPass !== '') {
-            this.$refs.regForm.validateField('checkPass');
-          }
-          callback();
-        }
-      };
-      var validatePass2 = (rule, value, callback) => {
-        if (value === '') {
-          callback(new Error('请再次输入密码'));
-        } else if (value !== this.regForm.pass) {
-          callback(new Error('两次输入密码不一致!'));
-        } else {
-          callback();
-        }
-      };
+      // var validatePass = (rule, value, callback) => {
+      //   if (value === '') {
+      //     callback(new Error('请输入密码'));
+      //   } else {
+      //     if (this.regForm.checkPass !== '') {
+      //       this.$refs.regForm.validateField('checkPass');
+      //     }
+      //     callback();
+      //   }
+      // };
+      // var validatePass2 = (rule, value, callback) => {
+      //   if (value === '') {
+      //     callback(new Error('请再次输入密码'));
+      //   } else if (value !== this.regForm.pass) {
+      //     callback(new Error('两次输入密码不一致!'));
+      //   } else {
+      //     callback();
+      //   }
+      // };
       return {
         loading: false,
         status: 1,
         loginForm: {
-          name: '',
+          username: '',
           password: ''
         },
         regForm: {
-          name: '',
+          username: '',
           password: '',
-          checkPass: ''
+          nickname: ''
         },
         loginRules: {
-          name: [
-            { required: true, message: '请输入用户名', trigger: 'blur' }
+          username: [
+            { required: true, message: '请输入账号', trigger: 'blur' }
           ],
           password: [
             { required: true, message: '请输入密码', trigger: 'blur' }
           ]
         },
         regRules: {
-          name: [
+          username: [
             { required: true, message: '请输入用户名', trigger: 'blur' }
           ],
           password: [
-            { validator: validatePass, trigger: 'blur' }
+            { required: true, message: '请输入密码', trigger: 'blur' }
           ],
-          checkPass: [
-            { validator: validatePass2, trigger: 'blur' }
+          nickname: [
+            { required: true, message: '请输入昵称', trigger: 'blur' }
           ],
         }
       }
     },
     methods: {
+      ...mapMutations('Base', ['setToken']),
       signIn () {
         this.$refs['loginForm'].validate((valid) => {
-          this.loading = true
           if (valid) {
-            setTimeout(() => {
-              this.$store.commit('changIsSigin', 1)
-              this.$router.push({ name: 'home' })
-              this.loading = false
-            }, 2000)
+            this.loading = true
+            this.$axios.post('api/users/login', this.loginForm).then(res => {
+              console.log(res)
+              if (res.code != 0) {
+                this.$message({
+                  message: res.msg,
+                  type: 'error'
+                });
+                this.loading = false
+              } else {
+                Cookie.set('token', res.token)
+                // this.setToken(res.token) //分别使用不同的方法使用 vuex
+                this.$store.commit('setToken', res.token)
+                this.$store.commit('changIsSigin', 1) //分别使用不同的方法使用 vuex
+                setTimeout(() => {
+                  this.$message({
+                    message: res.msg,
+                    type: 'success'
+                  });
+                  this.$router.push({ name: 'home' })
+                  this.loading = false
+                }, 1500)
+              }
+            })
           } else {
             console.log('error submit!!');
             this.loading = false
@@ -111,7 +132,22 @@
       signUP () {
         this.$refs['regForm'].validate((valid) => {
           if (valid) {
-            alert('submit!');
+            this.$axios.post('api/users/register', this.regForm).then(res => {
+              console.log(res)
+              if (res.code != 0) {
+                this.$message({
+                  message: res.msg,
+                  type: 'error'
+                });
+                this.loading = false
+              } else {
+                this.$message({
+                  message: res.msg,
+                  type: 'success'
+                });
+                this.loading = false
+              }
+            })
           } else {
             console.log('error submit!!');
             return false;

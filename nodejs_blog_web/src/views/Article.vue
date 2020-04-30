@@ -21,7 +21,6 @@
             </template>
           </el-table-column>
         </el-table>
-
       </div>
     </div>
   </div>
@@ -32,19 +31,14 @@
     name: "Article",
     data () {
       return {
-        articleList: [
-          {
-            id: 1,
-            title: 'nodejs',
-            create_time: '2020-02-03'
-          }
-        ]
+        articleList: []
       }
     },
     methods: {
       handleLook (row) {
         let id = row.id
-        window.open('#/detail/' + id)
+        // window.open('#/detail/' + id)
+        this.$router.push(`details/${id}`)
       },
       handleAdd () {
         this.$router.push({ name: 'articleAdd' })
@@ -60,18 +54,36 @@
           cancelButtonText: '取消',
           type: 'warning'
         }).then(() => {
-          this.$message({
-            type: 'success',
-            message: '删除成功!'
-          });
+          this.$axios.post('api/article/delete', {
+            article_id: id
+          }).then(res => {
+            if (res.code === 0) {
+              this.$message({
+                type: 'success',
+                message: '删除成功!'
+              });
+              this.getMyList()
+            }
+          })
         }).catch(() => {
           this.$message({
             type: 'info',
             message: '已取消删除'
           });
         });
+      },
+      getMyList () {
+        this.$axios.get('api/article/myList').then(res => {
+          if (res.code === 0) {
+            let result = res.data
+            this.articleList = result.filter((item) => { return item.status === 0 })
+          }
+        })
       }
     },
+    created () {
+      this.getMyList()
+    }
   }
 </script>
 

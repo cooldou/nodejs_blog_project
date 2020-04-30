@@ -15,10 +15,10 @@
 <style lang="scss" scoped>
   footer {
     text-align: center;
-    // width: 100%;
+    width: 100%;
     // position: fixed;
     // bottom: 0;
-    margin-top: 80px;
+    margin-top: 20px;
     padding: 15px 0;
     background-color: #2d2d2d;
     color: #bbb;

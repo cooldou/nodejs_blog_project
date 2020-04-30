@@ -1,19 +1,25 @@
 import Vue from 'vue'
 import Vuex from 'vuex'
+import Base from './base'
 
 Vue.use(Vuex)
 
 export default new Vuex.Store({
+  namespaced: true,
   state: {
-    isSignIn: 0
+    isSignIn: 0,
+    token: '1',
   },
   mutations: {
-    changIsSigin (state, n) {
+    changIsSigin(state, n) {
       state.isSignIn = n
+    },
+    setToken(state, val) {
+      state.token = val
     }
   },
-  actions: {
-  },
+  actions: {},
   modules: {
+    Base
   }
 })

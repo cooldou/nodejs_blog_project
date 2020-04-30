@@ -2,7 +2,7 @@
   <div class="home">
     <div class="wrapper">
       <div class="main">
-        <blog-list></blog-list>
+        <blog-list :data="data"></blog-list>
       </div>
     </div>
   </div>
@@ -14,6 +14,25 @@
     name: 'Home',
     components: {
       BlogList
+    },
+    data () {
+      return {
+        data: []
+      }
+    },
+
+    methods: {
+      getAllList () {
+        this.$axios.get('api/article/allList').then(res => {
+          if (res.code === 0) {
+            this.data = res.data
+          }
+        })
+      }
+    },
+
+    created () {
+      this.getAllList()
     }
   }
 </script>

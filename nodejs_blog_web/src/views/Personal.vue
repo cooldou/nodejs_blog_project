@@ -7,7 +7,7 @@
             <el-input v-model="form.nickname" class="nickname"></el-input>
           </el-form-item>
           <el-form-item label="头像">
-            <el-upload class="avatar-uploader" action="" :show-file-list="false" :on-success="handleAvatarSuccess" :before-upload="beforeAvatarUpload">
+            <el-upload class="avatar-uploader" :action="uploadUrl" :show-file-list="false" ref="upload" :on-success="handleAvatarSuccess" :before-upload="beforeAvatarUpload" name="head_img">
               <img v-if="imageUrl" :src="imageUrl" class="avatar">
               <i v-else class="el-icon-plus avatar-uploader-icon"></i>
               <div slot="tip" class="el-upload__tip">只能上传jpg/png文件，且不超过2M</div>
@@ -15,7 +15,8 @@
           </el-form-item>
           <el-form-item>
             <el-button type="primary" @click="save">保存</el-button>
-            <el-button>退出登录</el-button>
+            <el-button @click="
+restore">退出登录</el-button>
           </el-form-item>
         </el-form>
 
@@ -25,11 +26,14 @@
 </template>
 <script>
   import imgDefault from '@/assets/logo.jpg'
+  import Cookie from 'js-cookie'
+
   export default {
     name: "Personal",
     data () {
       return {
         imageUrl: imgDefault,
+        uploadUrl: 'http://127.0.0.1:3000/api/users/upload',
         form: {
           nickname: null,
         }
@@ -37,11 +41,45 @@
     },
     methods: {
       save () {
-        console.log('保存')
+        console.log(this.imageUrl)
+        if (this.imageUrl) {
+          this.form.head_img = this.imageUrl
+          this.$axios.post('/api/users/update', this.form).then(res => {
+            console.log(res)
+            if (res.code === 0) {
+              this.$message({
+                message: '保存成功',
+                type: 'success'
+              })
+              location.reload()
+            }
+          }).catch(e => {
+            console.log(e)
+          })
+        }
+      },
+      restore () {
+        this.$store.commit('changIsSigin', 0)
+        this.$store.commit('setToken', '')
+        Cookie.remove('token')
+        this.$router.push({
+          path: '/'
+        })
       },
       handleAvatarSuccess (res, file) {
         console.log(res, file)
-        // this.imageUrl = URL.createObjectURL(file.raw);
+        if (res.code === 0) {
+          this.imageUrl = res.data
+          this.$message({
+            message: res.msg,
+            type: 'success'
+          })
+        } else {
+          this.$message({
+            message: res.msg,
+            type: 'error'
+          })
+        }
       },
       beforeAvatarUpload (file) {
         const isJPG = file.type === 'image/jpeg';
@@ -54,7 +92,25 @@
           this.$message.error('上传头像图片大小不能超过 2MB!');
         }
         return isJPG && isLt2M;
+      },
+      getUserInfo () {
+        return this.$axios.get('api/users/info').then((res) => {
+          if (res.code === 0) {
+            this.form = res.data
+            if (res.data.head_img) {
+              this.imageUrl = res.data.head_img
+            }
+          } else {
+            this.$message({
+              msg: res.data.msg,
+              type: 'error'
+            })
+          }
+        })
       }
+    },
+    created () {
+      this.getUserInfo()
     }
   }
 </script>

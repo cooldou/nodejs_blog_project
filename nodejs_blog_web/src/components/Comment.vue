@@ -1,51 +1,35 @@
 <template>
   <div class="comment-box">
-    <div v-if="isSigIn === 0" class="signInText">登录留言吧~~</div>
+    <div v-if="isSigIn === 0" class="signInText" @click="sigIn">登录留言吧~~</div>
     <div v-else class="input-box">
       <div class="input-top">
         <div class="img">
-          <img src="" class="avatar" alt="">
-          <p class="username">aaaa</p>
+          <img :src="head_img" class="avatar" alt="">
+          <p class="username">{{userName}}</p>
         </div>
         <div class="text">
           <textarea class="comment-content" v-model="submitText"></textarea>
         </div>
       </div>
       <div class="input-bottom">
-        <a href="javascript:void(0)" @claick="submitCommit" class="submit">发表评论</a>
+        <a href="javascript:void(0)" @click="submitCommit" class="submit">发表评论</a>
       </div>
     </div>
     <div class="all-comment">
-      <p class="title">全部评论<span class="total">4</span></p>
+      <p class="title">全部评论<span class="total">{{this.commentList.length}}</span></p>
       <div class="comment-list">
-        <div class="comment-item">
+        <div class="comment-item" v-for="item in commentList" :key="item.id">
           <div class="item-l">
             <div class="img">
-              <img class="avatar" src="" alt="">
-              <p class="username">dffffff</p>
+              <img class="avatar" :src="item.head_img" alt="">
+              <p class="username">{{item.nickname}}</p>
             </div>
           </div>
           <div class="item-r">
             <div class="comment-content">
-              <div class="comment-text">sfsfsfsfsfsf</div>
+              <div class="comment-text">{{item.cm_content}}</div>
               <div class="comment-time">
-                <span class="date">2020-04-02</span>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="comment-item">
-          <div class="item-l">
-            <div class="img">
-              <img class="avatar" src="" alt="">
-              <p class="username">dffffff</p>
-            </div>
-          </div>
-          <div class="item-r">
-            <div class="comment-content">
-              <div class="comment-text">sfsfsfsfsfsf</div>
-              <div class="comment-time">
-                <span class="date">2020-04-02</span>
+                <span class="date">{{item.create_time}}</span>
               </div>
             </div>
           </div>
@@ -59,19 +43,87 @@
   export default {
     data () {
       return {
-        submitText: ''
+        submitText: '',
+        head_img: '',
+        userName: '',
+        commentList: [],
+        article_id: null
       }
     },
 
     methods: {
       submitCommit () {
-
+        if (!this.submitText) {
+          this.$message({
+            message: '请输入评论内容',
+            type: 'warning'
+          })
+        } else {
+          this.$axios.post('api/comment/publish', {
+            content: this.submitText,
+            article_id: this.$route.params.id
+          }).then(res => {
+            console.log(res)
+            if (res.code === 0) {
+              this.$message({
+                message: res.msg,
+                type: 'success'
+              })
+            }
+            this.submitText = ''
+            this.getCommentList(this.article_id)
+          }).catch(e => {
+            console.log(e)
+          })
+        }
+      },
+      getUserInfo () {
+        return this.$axios.get('api/users/info').then((res) => {
+          console.log(res)
+          if (res.code === 0) {
+            this.userName = res.data.nickname
+            this.head_img = res.data.head_img
+          } else {
+            this.$message({
+              msg: res.data.msg,
+              type: 'error'
+            })
+          }
+        })
+      },
+      getCommentList (id) {
+        this.$axios.get(`api/comment/list?article_id=${id}`).then(res => {
+          console.log(res)
+          if (res.code === 0) {
+            this.commentList = res.data
+          }
+        }).catch(e => {
+          console.log(e)
+        })
+      },
+      sigIn () {
+        this.$router.push({
+          path: '/login'        })
       }
     },
 
     computed: {
       isSigIn () {
         return this.$store.state.isSignIn
+      }
+    },
+
+    created () {
+      if (this.$store.state.isSignIn === 0) {
+        this.$message({
+          message: '登录后访问体验更好哟~~',
+        })
+      } else {
+        this.getUserInfo()
+        if (this.$route.params.id) {
+          this.article_id = this.$route.params.id
+          this.getCommentList(this.$route.params.id)
+        }
       }
     }
   }

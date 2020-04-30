@@ -11,8 +11,8 @@
         <mavon-editor v-model="content"></mavon-editor>
       </div>
       <div class="save_btn">
-        <el-button size="mini" type="primary" @click="save">保存</el-button>
-
+        <el-button v-if="this.$route.params.id" size="mini" type="primary" @click="save">保存</el-button>
+        <el-button v-else size="mini" type="primary" @click="publish">发表</el-button>
       </div>
     </div>
   </div>
@@ -22,16 +22,64 @@
   export default {
     name: 'ArticleEdit',
     data () {
-      return {}
+      return {
+        title: '',
+        content: '',
+        article_id: null
+      }
     },
     methods: {
       goBack () {
         this.$router.go(-1)
       },
+      publish () {
+        this.$axios.post('api/article/add', {
+          title: this.title,
+          content: this.content
+        }).then(res => {
+          if (res.code === 0) {
+            this.$message({
+              message: res.msg,
+              type: 'success'
+            })
+            this.$router.push({
+              name: 'article'
+            })
+          }
+        }).catch(e => {
+          console.log(e)
+        })
+      },
       save () {
-
-      }
+        this.$axios.post('api/article/update', {
+          title: this.title,
+          content: this.content,
+          article_id: this.article_id
+        }).then(res => {
+          if (res.code === 0) {
+            this.$message({
+              message: res.msg,
+              type: 'success'
+            })
+            this.goBack()
+          }
+        })
+      },
+      getDetail (id) {
+        this.$axios.get(`api/article/detail?article_id=${id}`).then(res => {
+          if (res.code === 0) {
+            this.title = res.data.title
+            this.content = res.data.content
+          }
+        })
+      },
     },
+    created () {
+      if (this.$route.params.id) {
+        this.article_id = this.$route.params.id
+        this.getDetail(this.article_id)
+      }
+    }
   }
 </script>
 

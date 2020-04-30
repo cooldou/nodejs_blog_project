@@ -1,12 +1,15 @@
 <template>
   <div class="blog-content-box">
     <div class="wrapper">
-      <h1 class="title">nodejs教程</h1>
+      <div class="back">
+        <el-button size="mini" @click="goBack">返回</el-button>
+      </div>
+      <h1 class="title">{{blog_detail.title}}</h1>
       <div class="time">
-        <span class="date"><i class="iconfont icon-date"></i>2020-03-23</span>
+        <span class="date"><i class="iconfont icon-date"></i>{{blog_detail.create_time}}</span>
       </div>
       <div class="detail">
-        <mavon-editor v-model="content" defaultOpen="preview" :toolbarsFlag="false" :subfield="false" />
+        <mavon-editor v-model="blog_detail.content" defaultOpen="preview" :toolbarsFlag="false" :subfield="false" />
       </div>
       <comment></comment>
     </div>
@@ -22,8 +25,24 @@
     },
     data () {
       return {
-        content: 'sdfsdfsfsfsfsfd'
+        blog_detail: {}
       }
+    },
+    methods: {
+      getDetail (id) {
+        this.$axios.get(`api/article/detail?article_id=${id}`).then(res => {
+          if (res.code === 0) {
+            this.blog_detail = res.data
+          }
+        })
+      },
+      goBack () {
+        this.$router.go(-1)
+      },
+    },
+    created () {
+      let id = this.$route.params.id
+      this.getDetail(id)
     }
   }
 </script>
@@ -32,6 +51,7 @@
   .blog-content-box {
     min-height: calc(100vh - 206px);
     .wrapper {
+      position: relative;
       padding: 20px;
       background: #f8f8f8;
       box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4),
@@ -51,6 +71,11 @@
           color: #666;
           margin-right: 5px;
         }
+      }
+      .back {
+        position: absolute;
+        top: 20px;
+        left: 20px;
       }
     }
   }
